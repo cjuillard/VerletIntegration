@@ -31,23 +31,45 @@ public class VerletIntegration : MonoBehaviour
     public float bounce = .9f;
     public Vector3 gravity = new Vector3(0, -0.5f, 0);
     public float friction = 0.999f;
+    public int NumIterations = 3;
+
+    public Vector3 ClothPosition = new Vector3(0,4,0);
+    public float ClothWidth = 2.5f;
+    public float ClothHeight = 2.5f;
+    public int PointsPerUnit = 4;
+    
+    public float strengthOfPush = .01f;
+    public float radiusOfPush = 1;
+    
+    private Camera mainCamera;
+    
     void Start()
     {
         InitPoints();
+        mainCamera = FindObjectOfType<Camera>();
     }
-
-    public int numPointsToPush = 5;
-    public float strengthOfPush = .01f;
+    
     void Update()
     {
         if (Input.GetMouseButtonUp(0))
         {
-            for (int i = 0; i < numPointsToPush; i++)
+            RaycastHit hit;
+            Ray ray = mainCamera.ScreenPointToRay(Input.mousePosition);
+
+            Plane clothPlane = new Plane(new Vector3(0, 0, 1), ClothPosition);
+            if (clothPlane.Raycast(ray, out float enter))
             {
-                Point p = points[Random.Range(0, points.Count)];
-                p.oldPos += new Vector3(Random.Range(-strengthOfPush / 2f, strengthOfPush),
-                    Random.Range(-strengthOfPush / 2f, strengthOfPush),
-                    Random.Range(-strengthOfPush / 2f, strengthOfPush));
+                Vector3 hitPoint = ray.GetPoint(enter);
+                foreach (Point p in points)
+                {
+                    Vector3 delta = p.pos - hitPoint;
+                    float sqrMag = delta.sqrMagnitude;
+                    if (sqrMag < radiusOfPush * radiusOfPush)
+                    {
+                        float strengthFalloff = (radiusOfPush - Mathf.Sqrt(sqrMag)) / radiusOfPush;
+                        p.oldPos -= ray.direction * (strengthFalloff * strengthOfPush);
+                    }
+                }
             }
         }
     }
@@ -63,13 +85,6 @@ public class VerletIntegration : MonoBehaviour
         UpdateRenderPos();
     }
 
-    public int NumIterations = 3;
-
-    public Vector3 ClothPosition = new Vector3(0,4,0);
-    public float ClothWidth = 2.5f;
-    public float ClothHeight = 2.5f;
-    public int PointsPerUnit = 4;
-    
     public void InitPoints() 
     {
         // float speed = 1;

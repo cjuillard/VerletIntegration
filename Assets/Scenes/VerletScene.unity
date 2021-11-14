@@ -259,13 +259,13 @@ MonoBehaviour:
   bounce: 0.9
   gravity: {x: 0, y: -0.3, z: 0}
   friction: 0.999
-  numPointsToPush: 5
-  strengthOfPush: 1
   NumIterations: 3
-  ClothPosition: {x: 0, y: 4, z: 0}
-  ClothWidth: 2.5
-  ClothHeight: 2.5
+  ClothPosition: {x: 0, y: 4.5, z: 0}
+  ClothWidth: 4
+  ClothHeight: 4
   PointsPerUnit: 4
+  strengthOfPush: 0.75
+  radiusOfPush: 0.5
 --- !u!4 &598728208
 Transform:
   m_ObjectHideFlags: 0
@@ -533,7 +533,7 @@ BoxCollider:
   m_GameObject: {fileID: 1933293310}
   m_Material: {fileID: 0}
   m_IsTrigger: 0
-  m_Enabled: 1
+  m_Enabled: 0
   serializedVersion: 2
   m_Size: {x: 1, y: 1, z: 1}
   m_Center: {x: 0, y: 0, z: 0}
