@@ -258,12 +258,19 @@ MonoBehaviour:
   stickPrefab: {fileID: 1364031075382651837, guid: 96e7538c2e8bda64fb3b1cef1e46ffc4, type: 3}
   bounce: 0.9
   gravity: {x: 0, y: -0.3, z: 0}
+  wind: {x: 1, y: 0, z: 0}
+  WindNoiseFrequency: 1
+  WindowNoiseRange: {x: 0.75, y: 1}
+  NoiseStrength: 0.5
   friction: 0.999
   NumIterations: 3
   ClothPosition: {x: 0, y: 4.5, z: 0}
   ClothWidth: 4
   ClothHeight: 4
-  PointsPerUnit: 4
+  PointsPerUnit: 2
+  FlagPoleHeight: 4
+  FlagWidth: 3
+  FlagAspectRatio: 0.5263158
   strengthOfPush: 0.75
   radiusOfPush: 0.5
 --- !u!4 &598728208

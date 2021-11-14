@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Serialization;
 using Random = UnityEngine.Random;
 
 // TODO continue around 7:12 - https://www.youtube.com/watch?v=pBMivz4rIJY&ab_channel=CodingMath
@@ -30,6 +31,10 @@ public class VerletIntegration : MonoBehaviour
     public LineRenderer stickPrefab;
     public float bounce = .9f;
     public Vector3 gravity = new Vector3(0, -0.5f, 0);
+    public Vector3 wind = new Vector3(.25f, 0, 0);
+    public float WindNoiseFrequency = 1;
+    public Vector2 WindowNoiseRange = new Vector2(.75f, 1);
+    [FormerlySerializedAs("WindNoiseStrength")] public float NoiseStrength = 1;
     public float friction = 0.999f;
     public int NumIterations = 3;
 
@@ -37,6 +42,13 @@ public class VerletIntegration : MonoBehaviour
     public float ClothWidth = 2.5f;
     public float ClothHeight = 2.5f;
     public int PointsPerUnit = 4;
+
+    [Header("Flag Parameters")] 
+    public float FlagPoleHeight = 4;
+
+    public float FlagWidth = 3;
+    public float FlagAspectRatio = 10 / 19f;
+    public float FlagHeight => FlagWidth * FlagAspectRatio;
     
     public float strengthOfPush = .01f;
     public float radiusOfPush = 1;
@@ -53,13 +65,13 @@ public class VerletIntegration : MonoBehaviour
     {
         if (Input.GetMouseButtonUp(0))
         {
-            RaycastHit hit;
             Ray ray = mainCamera.ScreenPointToRay(Input.mousePosition);
 
-            Plane clothPlane = new Plane(new Vector3(0, 0, 1), ClothPosition);
+            var clothPlane = new Plane(new Vector3(0, 0, 1), ClothPosition);
             if (clothPlane.Raycast(ray, out float enter))
             {
                 Vector3 hitPoint = ray.GetPoint(enter);
+                Debug.Log($"hitPoint={hitPoint}");
                 foreach (Point p in points)
                 {
                     Vector3 delta = p.pos - hitPoint;
@@ -113,32 +125,92 @@ public class VerletIntegration : MonoBehaviour
         // }
 
         AddCloth(ClothPosition);
+
+        // InitFlag();
     }
 
-    private void AddCloth(Vector3 topClothPos)
+    private void AddGrid(Vector3 startPos, Vector3 endPos, out Vector2Int pointsSize)
     {
+        Vector3 delta = endPos - startPos;
+        
         int indexStart = points.Count;
-        Vector3 startCloth = topClothPos - new Vector3(ClothWidth / 2f, 0, 0);
-        int pointsAlongX = Mathf.CeilToInt(ClothWidth * (float) PointsPerUnit);
-        int pointsAlongY = Mathf.CeilToInt(ClothHeight * (float) PointsPerUnit);
+        int pointsAlongX = Mathf.CeilToInt(Mathf.Abs(delta.x) * PointsPerUnit);
+        int pointsAlongY = Mathf.CeilToInt(Mathf.Abs(delta.y) * PointsPerUnit);
         for (int x = 0; x < pointsAlongX; x++)
         {
-            float xPos = startCloth.x + x * ClothWidth / (float)pointsAlongX;
+            float xPos = startPos.x + x * delta.x / pointsAlongX;
             for (int y = 0; y < pointsAlongY; y++)
             {
-                Vector3 newPos = new Vector3(xPos, startCloth.y - y * ClothHeight / (float)pointsAlongY, startCloth.z);
+                Vector3 newPos = new Vector3(xPos, startPos.y + y * delta.y / pointsAlongY, startPos.z);
+                AddPoint(newPos);
+            }
+        }
+
+        pointsSize = new Vector2Int(pointsAlongX, pointsAlongY);
+        
+        for (int x = 0; x < pointsAlongX - 1; x++)
+        {
+            int colStart = indexStart + pointsAlongY * x;
+            for (int y = 0; y < pointsAlongY - 1; y++)
+            {
+                int currIndex = colStart + y;
+                int bot = colStart + y + 1;
+                int right = indexStart + pointsAlongY * (x + 1) + y;
+                int botRight = right + 1;
+        
+                AddStick(currIndex, right);
+                AddStick(currIndex, bot);
+        
+                if (x == pointsAlongX - 2)
+                    AddStick(right, botRight);
+                if(y == pointsAlongY - 2) 
+                    AddStick(bot, botRight);
+            }
+        }
+    }
+    
+    private void InitFlag()
+    {
+        wind = new Vector3(1, 0, 0);
+        Vector3 startPos = new Vector3(-FlagWidth / 2f, FlagPoleHeight, 0);
+        Vector3 endPos = new Vector3(FlagWidth / 2f, startPos.y - FlagHeight, 0);
+        int pointStart = points.Count;
+        AddGrid(startPos, endPos, out Vector2Int pointsSize);
+
+        for (int y = 0; y < pointsSize.y; y++)
+        {
+            int index = pointStart + y;
+            points[index].pinned = true;
+        }
+    }
+    
+    private void AddCloth(Vector3 topClothPos)
+    {
+        wind = Vector3.zero;
+        NoiseStrength = 0;
+        
+        int indexStart = points.Count;
+        Vector3 startCloth = topClothPos - new Vector3(ClothWidth / 2f, 0, 0);
+        int pointsAlongX = Mathf.CeilToInt(ClothWidth * PointsPerUnit);
+        int pointsAlongY = Mathf.CeilToInt(ClothHeight * PointsPerUnit);
+        for (int x = 0; x < pointsAlongX; x++)
+        {
+            float xPos = startCloth.x + x * ClothWidth / pointsAlongX;
+            for (int y = 0; y < pointsAlongY; y++)
+            {
+                Vector3 newPos = new Vector3(xPos, startCloth.y - y * ClothHeight / pointsAlongY, startCloth.z);
                 AddPoint(newPos, y == 0);
             }
         }
 
         for (int x = 0; x < pointsAlongX - 1; x++)
         {
-            int colStart = indexStart + pointsAlongX * x;
+            int colStart = indexStart + pointsAlongY * x;
             for (int y = 0; y < pointsAlongY - 1; y++)
             {
                 int currIndex = colStart + y;
                 int bot = colStart + y + 1;
-                int right = indexStart + pointsAlongX * (x + 1) + y;
+                int right = indexStart + pointsAlongY * (x + 1) + y;
                 int botRight = right + 1;
 
                 AddStick(currIndex, right);
@@ -186,7 +258,10 @@ public class VerletIntegration : MonoBehaviour
             Vector3 v = (p.pos - p.oldPos) * friction;
             p.oldPos = p.pos;
             p.pos += v;
-            p.pos += gravity * Time.fixedDeltaTime;
+            Vector3 noise = new Vector3(Random.Range(-1, 1), Random.Range(-1, 1), Random.Range(-1, 1)).normalized
+                            * NoiseStrength;
+            float windStrength = Mathf.Lerp(WindowNoiseRange.x, WindowNoiseRange.y, Mathf.Clamp01(Mathf.PerlinNoise(0, Time.time * WindNoiseFrequency)));
+            p.pos += (gravity + wind * windStrength + noise) * Time.fixedDeltaTime;
         }
     }
 
