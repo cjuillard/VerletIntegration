@@ -15,6 +15,13 @@ public class VerletIntegration : MonoBehaviour
         public Vector3 oldPos;
         public GameObject visual;
         public bool pinned;
+        public Vector3 Velocity => pos - oldPos;
+
+        public void Pin()
+        {
+            this.pinned = true;
+            oldPos = pos;
+        }
     }
 
     public class Stick
@@ -49,6 +56,11 @@ public class VerletIntegration : MonoBehaviour
     public float FlagWidth = 3;
     public float FlagAspectRatio = 10 / 19f;
     public float FlagHeight => FlagWidth * FlagAspectRatio;
+
+    [Header("Pinned Grid")] 
+    public float PinnedGridWidth = 4;
+    public float PinnedGridHeight = 4;
+    public int PinnedGridPointsPerPin = 4;
     
     public float strengthOfPush = .01f;
     public float radiusOfPush = 1;
@@ -63,7 +75,7 @@ public class VerletIntegration : MonoBehaviour
     
     void Update()
     {
-        if (Input.GetMouseButtonUp(0))
+        if (Input.GetMouseButton(0))
         {
             Ray ray = mainCamera.ScreenPointToRay(Input.mousePosition);
 
@@ -84,6 +96,8 @@ public class VerletIntegration : MonoBehaviour
                 }
             }
         }
+        
+        UpdateRenderPos();
     }
 
     void FixedUpdate() 
@@ -94,7 +108,6 @@ public class VerletIntegration : MonoBehaviour
             UpdateSticks();
             ConstrainPoints();   
         }
-        UpdateRenderPos();
     }
 
     public void InitPoints() 
@@ -124,9 +137,38 @@ public class VerletIntegration : MonoBehaviour
         //     AddStick(i0, i1);
         // }
 
-        AddCloth(ClothPosition);
+        // AddCloth(ClothPosition);
 
         // InitFlag();
+
+        InitPinnedGrid();
+    }
+
+    private void InitPinnedGrid()
+    {
+        wind = new Vector3(0, 0, 0);
+        NoiseStrength = 0;
+        Vector3 startPos = new Vector3(-PinnedGridWidth / 2f, 1, 0);
+        Vector3 endPos = new Vector3(PinnedGridWidth / 2f, 1 + PinnedGridHeight, 0);
+        int pointStart = points.Count;
+        AddGrid(startPos, endPos, out Vector2Int pointsSize);
+
+        for (int x = 0; x < pointsSize.x; x+=PinnedGridPointsPerPin)
+        {
+            points[pointStart + x * pointsSize.y].Pin();
+            points[pointStart + x * pointsSize.y + pointsSize.y - 1].Pin();   
+        }
+
+        for (int y = 0; y < pointsSize.y; y += PinnedGridPointsPerPin)
+        {
+            points[pointStart + y].Pin();
+            points[pointStart + y + (pointsSize.x - 1) * pointsSize.y].Pin();
+        }
+        
+        // Make sure the corners get pinned
+        points[pointStart + pointsSize.y - 1].Pin();
+        points[pointStart + (pointsSize.x - 1) * pointsSize.y].Pin();
+        points[pointStart + (pointsSize.x - 1) * pointsSize.y + pointsSize.y - 1].Pin();
     }
 
     private void AddGrid(Vector3 startPos, Vector3 endPos, out Vector2Int pointsSize)
@@ -136,12 +178,14 @@ public class VerletIntegration : MonoBehaviour
         int indexStart = points.Count;
         int pointsAlongX = Mathf.CeilToInt(Mathf.Abs(delta.x) * PointsPerUnit);
         int pointsAlongY = Mathf.CeilToInt(Mathf.Abs(delta.y) * PointsPerUnit);
+        float stepSizeX = delta.x / (pointsAlongX - 1);
+        float stepSizeY = delta.y / (pointsAlongY - 1);
         for (int x = 0; x < pointsAlongX; x++)
         {
-            float xPos = startPos.x + x * delta.x / pointsAlongX;
+            float xPos = startPos.x + x * stepSizeX;
             for (int y = 0; y < pointsAlongY; y++)
             {
-                Vector3 newPos = new Vector3(xPos, startPos.y + y * delta.y / pointsAlongY, startPos.z);
+                Vector3 newPos = new Vector3(xPos, startPos.y + y * stepSizeY, startPos.z);
                 AddPoint(newPos);
             }
         }
@@ -269,6 +313,9 @@ public class VerletIntegration : MonoBehaviour
     {
         foreach (Point p in points)
         {
+            if (p.pinned)
+                continue;
+            
             Vector3 v = (p.pos - p.oldPos) * friction;
             if (p.pos.x > bounds.max.x)
             {
@@ -338,6 +385,18 @@ public class VerletIntegration : MonoBehaviour
                 s.p0.pos,
                 s.p1.pos,
             });
+
+            Vector3 lerped = Vector3.Lerp(s.p0.Velocity, s.p1.Velocity, .5f);
+            if(s.p0.Velocity != Vector3.zero)
+                Debug.Log($"{s.p0.pos} - {s.p0.oldPos}");
+            if(s.p1.Velocity != Vector3.zero)
+                Debug.Log($"{s.p1.pos} - {s.p1.oldPos}");
+            lerped = lerped.normalized * .5f;
+            Color col = new Color(lerped.x, lerped.y, lerped.z, 1);
+
+            // float len = lerped.magnitude;
+            // Color col = new Color(len, len, len, 1);
+            r.material.SetColor("_BaseColor", col);
         }
     }
 }

@@ -253,11 +253,11 @@ MonoBehaviour:
   points: []
   bounds:
     m_Center: {x: 0, y: 2.5, z: 0}
-    m_Extent: {x: 2.5, y: 2.5, z: 2.5}
-  pointPrefab: {fileID: 3170689679227598124, guid: 32257d8cd528f25499d7d5a1b6e7a469, type: 3}
-  stickPrefab: {fileID: 1364031075382651837, guid: 96e7538c2e8bda64fb3b1cef1e46ffc4, type: 3}
+    m_Extent: {x: 5, y: 2.5, z: 2.5}
+  pointPrefab: {fileID: 3170689679227598124, guid: b7157fc6e2415464393ee6e218caa1d3, type: 3}
+  stickPrefab: {fileID: 1364031075382651837, guid: 6aa6e3fda1e81ab4d9e9eaf2ff6b4dc7, type: 3}
   bounce: 0.9
-  gravity: {x: 0, y: -0.3, z: 0}
+  gravity: {x: 0, y: 0, z: 0}
   wind: {x: 1, y: 0, z: 0}
   WindNoiseFrequency: 1
   WindowNoiseRange: {x: 0.75, y: 1}
@@ -267,13 +267,14 @@ MonoBehaviour:
   ClothPosition: {x: 0, y: 4.5, z: 0}
   ClothWidth: 4
   ClothHeight: 4
-  PointsPerUnit: 4
+  PointsPerUnit: 2
   FlagPoleHeight: 4
   FlagWidth: 3
   FlagAspectRatio: 0.5263158
-  PinnedGridWidth: 4
+  PinnedGridWidth: 8
   PinnedGridHeight: 4
-  strengthOfPush: 0.75
+  PinnedGridPointsPerPin: 4
+  strengthOfPush: 4
   radiusOfPush: 0.5
 --- !u!4 &598728208
 Transform:
@@ -458,14 +459,14 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1687258581}
-  m_LocalRotation: {x: -0.025498277, y: 0.97105044, z: -0.20424208, w: -0.12122751}
-  m_LocalPosition: {x: 2, y: 5.5, z: 7}
+  m_LocalRotation: {x: 0, y: 1, z: 0, w: 0}
+  m_LocalPosition: {x: 0, y: 3, z: 4}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
   m_RootOrder: 0
-  m_LocalEulerAnglesHint: {x: 20.146, y: 195.09, z: 0.001}
+  m_LocalEulerAnglesHint: {x: 0, y: 180, z: 0}
 --- !u!114 &1687258586
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -517,7 +518,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &1933293311
 Transform:
   m_ObjectHideFlags: 0
@@ -526,8 +527,8 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1933293310}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 2.5, z: 0}
-  m_LocalScale: {x: 5, y: 5, z: 5}
+  m_LocalPosition: {x: 0, y: 3, z: 0}
+  m_LocalScale: {x: 10, y: 5, z: 5}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 598728208}
