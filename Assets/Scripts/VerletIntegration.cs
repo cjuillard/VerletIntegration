@@ -13,10 +13,16 @@ public class VerletIntegration : MonoBehaviour
     {
         public Vector3 pos;
         public Vector3 oldPos;
-        public GameObject visual;
+        public Renderer visual;
+        public Color color = Color.white;
         public bool pinned;
         public Vector3 Velocity => pos - oldPos;
 
+        public Point()
+        {
+            
+        }
+        
         public void Pin()
         {
             this.pinned = true;
@@ -61,6 +67,9 @@ public class VerletIntegration : MonoBehaviour
     public float PinnedGridWidth = 4;
     public float PinnedGridHeight = 4;
     public int PinnedGridPointsPerPin = 4;
+    public Vector2 VelocityRangeInput = new Vector2(0,.2f);
+    public Vector2 VelocityRangeOutput = new Vector2(0,1.5f);
+    public float ColorChangeSpeed = 1;
     
     public float strengthOfPush = .01f;
     public float radiusOfPush = 1;
@@ -86,7 +95,9 @@ public class VerletIntegration : MonoBehaviour
                 Debug.Log($"hitPoint={hitPoint}");
                 foreach (Point p in points)
                 {
+                    // Assume this is on the XY plane at Z=0
                     Vector3 delta = p.pos - hitPoint;
+                    delta.z = 0;
                     float sqrMag = delta.sqrMagnitude;
                     if (sqrMag < radiusOfPush * radiusOfPush)
                     {
@@ -268,11 +279,14 @@ public class VerletIntegration : MonoBehaviour
         }
     }
 
-    private void AddPoint(Vector3 pos, bool pinned = false) {
+    private void AddPoint(Vector3 pos, bool pinned = false)
+    {
+        GameObject go = Instantiate(pointPrefab, transform);
+        var renderer = go.GetComponent<Renderer>();
         points.Add(new Point() {
             pos = pos,
             oldPos = pos,
-            visual = Instantiate(pointPrefab, transform),
+            visual = renderer,
             pinned = pinned,
         });
     }
@@ -375,6 +389,25 @@ public class VerletIntegration : MonoBehaviour
         foreach(Point p in points)
         {
             p.visual.transform.position = p.pos;
+            if (p.pinned)
+                p.oldPos = p.pos;
+            
+            Vector3 vel = p.Velocity;
+            
+            // lerped = lerped.normalized * .5f;
+            // Color col = new Color(lerped.x, lerped.y, lerped.z, 1);
+            
+            // float len = vel.magnitude;
+            // len = Remap(len, VelocityRangeInput.x, VelocityRangeInput.y, VelocityRangeOutput.x, VelocityRangeOutput.y);
+            // Color col = new Color(len, len, len, 1);
+            vel.x = Mathf.Abs(vel.x);
+            vel.y = Mathf.Abs(vel.y);
+            vel.z = Mathf.Abs(vel.z);
+            Color col = new Color(Remap(vel.x, VelocityRangeInput.x, VelocityRangeInput.y, VelocityRangeOutput.x, VelocityRangeOutput.y),
+                Remap(vel.y, VelocityRangeInput.x, VelocityRangeInput.y, VelocityRangeOutput.x, VelocityRangeOutput.y),
+                Remap(vel.z, VelocityRangeInput.x, VelocityRangeInput.y, VelocityRangeOutput.x, VelocityRangeOutput.y));
+            Color prevColor = p.visual.material.GetColor("_BaseColor");
+            p.visual.material.SetColor("_BaseColor", Color.Lerp(prevColor, col, Time.deltaTime * ColorChangeSpeed));
         }
 
         foreach(Stick s in sticks) 
@@ -387,16 +420,22 @@ public class VerletIntegration : MonoBehaviour
             });
 
             Vector3 lerped = Vector3.Lerp(s.p0.Velocity, s.p1.Velocity, .5f);
-            if(s.p0.Velocity != Vector3.zero)
-                Debug.Log($"{s.p0.pos} - {s.p0.oldPos}");
-            if(s.p1.Velocity != Vector3.zero)
-                Debug.Log($"{s.p1.pos} - {s.p1.oldPos}");
-            lerped = lerped.normalized * .5f;
-            Color col = new Color(lerped.x, lerped.y, lerped.z, 1);
-
-            // float len = lerped.magnitude;
-            // Color col = new Color(len, len, len, 1);
-            r.material.SetColor("_BaseColor", col);
+            
+            // lerped = lerped.normalized * .5f;
+            // Color col = new Color(lerped.x, lerped.y, lerped.z, 1);
+            
+            float len = lerped.magnitude;
+            len = Remap(len, VelocityRangeInput.x, VelocityRangeInput.y, VelocityRangeOutput.x, VelocityRangeOutput.y);
+            Color col = new Color(len, len, len, 1);
+            Color prevColor = r.material.GetColor("_BaseColor");
+            r.material.SetColor("_BaseColor", Color.Lerp(prevColor, col, Time.deltaTime * ColorChangeSpeed));
         }
+    }
+
+    public float Remap(float val, float min, float max, float newMin, float newMax)
+    {
+        val = Mathf.Clamp(val, min, max);
+        float t = (val - min) / (max - min);
+        return Mathf.Lerp(newMin, newMax, t);
     }
 }

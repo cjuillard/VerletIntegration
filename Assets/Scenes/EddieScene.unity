@@ -274,7 +274,10 @@ MonoBehaviour:
   PinnedGridWidth: 8
   PinnedGridHeight: 4
   PinnedGridPointsPerPin: 4
-  strengthOfPush: 4
+  VelocityRangeInput: {x: 0, y: 0.3}
+  VelocityRangeOutput: {x: 0, y: 5}
+  ColorChangeSpeed: 10
+  strengthOfPush: 0.5
   radiusOfPush: 0.5
 --- !u!4 &598728208
 Transform:
