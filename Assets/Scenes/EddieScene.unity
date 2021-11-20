@@ -279,6 +279,8 @@ MonoBehaviour:
   ColorChangeSpeed: 10
   strengthOfPush: 0.5
   radiusOfPush: 0.5
+  sparkPrefab: {fileID: 6237553109302029157, guid: c732ab8de7572d0478ea068e1cf81b95, type: 3}
+  SpawnRatePerSecond: 10
 --- !u!4 &598728208
 Transform:
   m_ObjectHideFlags: 0
@@ -379,7 +381,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1687258581}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: be76e5f14cfee674cb30b491fb72b09b, type: 3}
   m_Name: 

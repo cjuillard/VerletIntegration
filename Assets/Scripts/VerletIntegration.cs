@@ -5,7 +5,6 @@ using UnityEngine;
 using UnityEngine.Serialization;
 using Random = UnityEngine.Random;
 
-// TODO continue around 7:12 - https://www.youtube.com/watch?v=pBMivz4rIJY&ab_channel=CodingMath
 public class VerletIntegration : MonoBehaviour
 {
     [Serializable]
@@ -74,8 +73,11 @@ public class VerletIntegration : MonoBehaviour
     public float strengthOfPush = .01f;
     public float radiusOfPush = 1;
     
+    public GameObject sparkPrefab;
+    public float SpawnRatePerSecond = 2;
+
     private Camera mainCamera;
-    
+    private 
     void Start()
     {
         InitPoints();
@@ -84,31 +86,61 @@ public class VerletIntegration : MonoBehaviour
     
     void Update()
     {
-        if (Input.GetMouseButton(0))
-        {
-            Ray ray = mainCamera.ScreenPointToRay(Input.mousePosition);
-
-            var clothPlane = new Plane(new Vector3(0, 0, 1), ClothPosition);
-            if (clothPlane.Raycast(ray, out float enter))
-            {
-                Vector3 hitPoint = ray.GetPoint(enter);
-                Debug.Log($"hitPoint={hitPoint}");
-                foreach (Point p in points)
-                {
-                    // Assume this is on the XY plane at Z=0
-                    Vector3 delta = p.pos - hitPoint;
-                    delta.z = 0;
-                    float sqrMag = delta.sqrMagnitude;
-                    if (sqrMag < radiusOfPush * radiusOfPush)
-                    {
-                        float strengthFalloff = (radiusOfPush - Mathf.Sqrt(sqrMag)) / radiusOfPush;
-                        p.oldPos -= ray.direction * (strengthFalloff * strengthOfPush);
-                    }
-                }
-            }
-        }
+        if(Application.isMobilePlatform)
+            HandleMobileInput();
+        else
+            HandleDesktopInput();
+        
         
         UpdateRenderPos();
+    }
+
+    private void HandleMobileInput() 
+    {
+        foreach (Touch touch in Input.touches)
+        {
+            if (touch.phase != TouchPhase.Ended && touch.phase != TouchPhase.Canceled)
+            {
+                ProcessTouchPosition(new Vector3(touch.position.x, touch.position.y, 0));
+            }
+        }
+    }
+
+    private void ProcessTouchPosition(Vector3 pos) 
+    {
+        Ray ray = mainCamera.ScreenPointToRay(pos);
+
+        var clothPlane = new Plane(new Vector3(0, 0, 1), ClothPosition);
+        if (clothPlane.Raycast(ray, out float enter))
+        {
+            Vector3 hitPoint = ray.GetPoint(enter);
+            foreach (Point p in points)
+            {
+                // Assume this is on the XY plane at Z=0
+                Vector3 delta = p.pos - hitPoint;
+                delta.z = 0;
+                float sqrMag = delta.sqrMagnitude;
+                if (sqrMag < radiusOfPush * radiusOfPush)
+                {
+                    float strengthFalloff = (radiusOfPush - Mathf.Sqrt(sqrMag)) / radiusOfPush;
+                    p.oldPos -= ray.direction * (strengthFalloff * strengthOfPush);
+                }
+            }
+
+            float spawnChance = SpawnRatePerSecond * Time.deltaTime;
+            if(Random.value < spawnChance)
+            {
+                Instantiate(sparkPrefab, hitPoint, Quaternion.identity, transform);
+            }
+        }
+    }
+
+    private void HandleDesktopInput() 
+    {
+        if (Input.GetMouseButton(0))
+        {
+            ProcessTouchPosition(Input.mousePosition);
+        }
     }
 
     void FixedUpdate() 
